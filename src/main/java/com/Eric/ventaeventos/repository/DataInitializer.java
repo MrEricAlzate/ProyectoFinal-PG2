@@ -104,6 +104,11 @@ public class DataInitializer implements IUsuarioRepository, IEventoRepository {
         eventos.add(concierto);
         eventos.add(teatro);
 
+        Usuario u3 = new Usuario("U003", "Carlos Perez",
+                "carlos@gmail.com", "3201112233");
+        u3.agregarMetodoDePago("PSE");
+        usuarios.add(u3);
+
         System.out.println("Datos cargados: " + usuarios.size()
                 + " usuarios, " + eventos.size() + " eventos.");
     }
