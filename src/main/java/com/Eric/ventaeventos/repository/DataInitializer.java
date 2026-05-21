@@ -1,6 +1,8 @@
 package com.Eric.ventaeventos.repository;
 
 import com.Eric.ventaeventos.model.*;
+import com.Eric.ventaeventos.service.EventoFactory;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,6 +105,16 @@ public class DataInitializer implements IUsuarioRepository, IEventoRepository {
 
         eventos.add(concierto);
         eventos.add(teatro);
+
+        Evento festival = EventoFactory.crearConcierto("E003", "Festival Petronio",
+                "Cali", LocalDateTime.of(2026, 8, 20, 18, 0), estadio);
+        festival.publicar();
+        eventos.add(festival);
+
+        Usuario u3 = new Usuario("U003", "Carlos Perez",
+                "carlos@gmail.com", "3201112233");
+        u3.agregarMetodoDePago("PSE");
+        usuarios.add(u3);
 
         System.out.println("Datos cargados: " + usuarios.size()
                 + " usuarios, " + eventos.size() + " eventos.");
