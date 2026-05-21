@@ -1,0 +1,382 @@
+@startuml diagrama_clases
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam classAttributeFontSize 11
+skinparam classStereotypeFontSize 11
+skinparam linetype ortho
+skinparam ranksep 60
+skinparam nodesep 40
+skinparam backgroundColor white
+skinparam class {
+    BackgroundColor #F9F9F9
+    BorderColor #555555
+    HeaderBackgroundColor #DDEEFF
+    ArrowColor #333333
+}
+
+' ─────────────────────────────────────────
+'  MODELO
+' ─────────────────────────────────────────
+
+package "model" #FFFDE7 {
+
+    class Usuario {
+        - idUsuario : String
+        - nombreCompleto : String
+        - correoElectronico : String
+        - numeroTelefono : String
+        - metodosDePago : List<String>
+        + agregarMetodoDePago(metodo: String)
+        + registrarCompra(compra: Compra)
+    }
+
+    class Evento {
+        - idEvento : String
+        - nombre : String
+        - categoria : String
+        - descripcion : String
+        - ciudad : String
+        - fechaHora : LocalDateTime
+        - estado : String
+        - politicaCancelacion : String
+        - politicaReembolso : String
+        - observers : List<EventoObserver>
+        + publicar()
+        + pausar()
+        + cancelar()
+        + agregarObserver(o: EventoObserver)
+        + removerObserver(o: EventoObserver)
+        - notificarObservers()
+    }
+
+    class Recinto {
+        - idRecinto : String
+        - nombre : String
+        - direccion : String
+        - ciudad : String
+        - zonas : List<Zona>
+        + agregarZona(zona: Zona)
+    }
+
+    class Zona {
+        - idZona : String
+        - nombre : String
+        - capacidad : int
+        - precioBase : double
+        - asientos : List<Asiento>
+        + agregarAsiento(a: Asiento)
+        + getAsientosDisponibles() : int
+    }
+
+    class Asiento {
+        - idAsiento : String
+        - fila : String
+        - numero : String
+        - estado : String
+        + reservar()
+        + vender()
+        + liberar()
+    }
+
+    class Compra {
+        - idCompra : String
+        - fechaCreacion : LocalDateTime
+        - totalBase : double
+        - estado : String
+        - entradas : List<Entrada>
+        - componenteActual : CompraComponent
+        + agregarServicioAdicional(d: CompraComponent)
+        + getTotal() : double
+        + getDescripcionCompleta() : String
+        + pagar()
+        + componenteActual() : CompraComponent
+    }
+
+    class Entrada {
+        - idEntrada : String
+        - precioFinal : double
+        - estado : String
+    }
+
+    class Pago {
+        - idPago : String
+        - metodoPago : String
+        - monto : double
+        - fechaPago : LocalDateTime
+        - estado : String
+        + procesar() : boolean
+    }
+
+    class Incidencia {
+        - idIncidencia : String
+        - tipo : String
+        - descripcion : String
+        - fecha : LocalDateTime
+        - entidadAfectada : String
+        - idEntidadAfectada : String
+    }
+}
+
+' ─────────────────────────────────────────
+'  REPOSITORY
+' ─────────────────────────────────────────
+
+package "repository" #E8F5E9 {
+
+    interface IUsuarioRepository <<interface>> {
+        + obtenerUsuarios() : List<Usuario>
+        + buscarUsuarioPorId(id: String) : Usuario
+        + agregar(u: Usuario)
+    }
+
+    interface IEventoRepository <<interface>> {
+        + obtenerEventos() : List<Evento>
+        + buscarEventoPorId(id: String) : Evento
+        + agregar(e: Evento)
+    }
+
+    class DataInitializer {
+        - {static} instance : DataInitializer
+        - usuarios : List<Usuario>
+        - eventos : List<Evento>
+        - recintos : List<Recinto>
+        - compras : List<Compra>
+        - incidencias : List<Incidencia>
+        - pagos : List<Pago>
+        - DataInitializer()
+        + {static} getInstance() : DataInitializer
+        - cargarDatos()
+        + agregarCompra(c: Compra)
+        + agregarIncidencia(i: Incidencia)
+        + agregarPago(p: Pago)
+    }
+}
+
+' ─────────────────────────────────────────
+'  SERVICE — DECORATOR
+' ─────────────────────────────────────────
+
+package "service" #FCE4EC {
+
+    interface CompraComponent <<interface>> {
+        + getTotal() : double
+        + getDescripcion() : String
+    }
+
+    class CompraBase {
+        - compra : Compra
+        + getTotal() : double
+        + getDescripcion() : String
+    }
+
+    abstract class ServicioDecorator {
+        # componente : CompraComponent
+        + getTotal() : double
+        + getDescripcion() : String
+    }
+
+    class ServicioVIP {
+        + getTotal() : double
+        + getDescripcion() : String
+    }
+
+    class SeguroCancelacion {
+        + getTotal() : double
+        + getDescripcion() : String
+    }
+
+' ─────────────────────────────────────────
+'  SERVICE — STRATEGY
+' ─────────────────────────────────────────
+
+    interface CancelacionStrategy <<interface>> {
+        + calcularReembolso(monto: double, dias: int) : double
+        + getDescripcionPolitica() : String
+    }
+
+    class ReembolsoCompletoStrategy {
+        + calcularReembolso(monto: double, dias: int) : double
+        + getDescripcionPolitica() : String
+    }
+
+    class ReembolsoParcialStrategy {
+        + calcularReembolso(monto: double, dias: int) : double
+        + getDescripcionPolitica() : String
+    }
+
+' ─────────────────────────────────────────
+'  SERVICE — OBSERVER
+' ─────────────────────────────────────────
+
+    interface EventoObserver <<interface>> {
+        + actualizar(nombreEvento: String, nuevoEstado: String)
+    }
+
+    class NotificacionUsuario {
+        - usuario : Usuario
+        + actualizar(nombreEvento: String, nuevoEstado: String)
+    }
+
+' ─────────────────────────────────────────
+'  SERVICE — COMMAND
+' ─────────────────────────────────────────
+
+    interface Comando <<interface>> {
+        + ejecutar()
+        + deshacer()
+    }
+
+    class PublicarEventoComando {
+        - evento : Evento
+        - estadoAnterior : String
+        + ejecutar()
+        + deshacer()
+    }
+
+' ─────────────────────────────────────────
+'  SERVICE — FACTORY / BUILDER / FACADE
+' ─────────────────────────────────────────
+
+    class EventoFactory {
+        + {static} crearConcierto(...) : Evento
+        + {static} crearTeatro(...) : Evento
+        + {static} crearConferencia(...) : Evento
+    }
+
+    class CompraBuilder {
+        - compra : Compra
+        - {static} contador : int
+        + conEntrada(zona: Zona) : CompraBuilder
+        + conAsiento(zona: Zona, a: Asiento) : CompraBuilder
+        + conServicioVIP() : CompraBuilder
+        + conSeguroCancelacion() : CompraBuilder
+        + build() : Compra
+    }
+
+    class CompraFacade {
+        - data : DataInitializer
+        - compraService : CompraService
+        + realizarCompra(...) : Compra
+        + cancelarCompra(c: Compra, dias: int) : double
+    }
+
+    class CompraService {
+        - cancelacionStrategy : CancelacionStrategy
+        + setCancelacionStrategy(s: CancelacionStrategy)
+        + cancelarCompra(c: Compra, dias: int) : double
+        + confirmarCompra(c: Compra)
+    }
+
+' ─────────────────────────────────────────
+'  SERVICE — ADAPTER / REPORTES
+' ─────────────────────────────────────────
+
+    interface ReporteExportador <<interface>> {
+        + exportar(compras: List<Compra>, ruta: String)
+        + getFormato() : String
+    }
+
+    class ReporteCSVAdapter {
+        + exportar(compras: List<Compra>, ruta: String)
+        + getFormato() : String
+    }
+
+    class ReportePDFAdapter {
+        + exportar(compras: List<Compra>, ruta: String)
+        + getFormato() : String
+    }
+
+' ─────────────────────────────────────────
+'  SERVICE — ISP INTERFACES
+' ─────────────────────────────────────────
+
+    interface IReportable <<interface>> {
+        + generarResumen() : String
+        + exportarCSV() : String
+    }
+
+    interface INotificable <<interface>> {
+        + notificar(mensaje: String)
+        + getTipoNotificacion() : String
+    }
+}
+
+' ─────────────────────────────────────────
+'  RELACIONES — MODELO
+' ─────────────────────────────────────────
+
+Usuario "1" o-- "0..*" Compra : realiza
+Evento "1" o-- "0..*" Compra : tiene
+Evento "1" *-- "1" Recinto : se realiza en
+Recinto "1" *-- "1..*" Zona : contiene
+Zona "1" *-- "0..*" Asiento : tiene
+Compra "1" *-- "1..*" Entrada : incluye
+Entrada "1" o-- "1" Zona : pertenece a
+Entrada "0..1" o-- "0..1" Asiento : asignado a
+Pago "1" o-- "1" Compra : paga
+
+' ─────────────────────────────────────────
+'  RELACIONES — REPOSITORY
+' ─────────────────────────────────────────
+
+DataInitializer ..|> IUsuarioRepository : implements
+DataInitializer ..|> IEventoRepository : implements
+DataInitializer "1" o-- "0..*" Usuario
+DataInitializer "1" o-- "0..*" Evento
+DataInitializer "1" o-- "0..*" Compra
+DataInitializer "1" o-- "0..*" Pago
+DataInitializer "1" o-- "0..*" Incidencia
+
+' ─────────────────────────────────────────
+'  RELACIONES — DECORATOR
+' ─────────────────────────────────────────
+
+CompraBase ..|> CompraComponent : implements
+ServicioDecorator ..|> CompraComponent : implements
+ServicioVIP --|> ServicioDecorator : extends
+SeguroCancelacion --|> ServicioDecorator : extends
+ServicioDecorator o-- CompraComponent : envuelve
+CompraBase o-- Compra : referencia
+Compra o-- CompraComponent : usa
+
+' ─────────────────────────────────────────
+'  RELACIONES — STRATEGY
+' ─────────────────────────────────────────
+
+ReembolsoCompletoStrategy ..|> CancelacionStrategy : implements
+ReembolsoParcialStrategy ..|> CancelacionStrategy : implements
+CompraService o-- CancelacionStrategy : usa
+
+' ─────────────────────────────────────────
+'  RELACIONES — OBSERVER
+' ─────────────────────────────────────────
+
+NotificacionUsuario ..|> EventoObserver : implements
+Evento o-- EventoObserver : notifica
+NotificacionUsuario o-- Usuario : referencia
+
+' ─────────────────────────────────────────
+'  RELACIONES — COMMAND
+' ─────────────────────────────────────────
+
+PublicarEventoComando ..|> Comando : implements
+PublicarEventoComando o-- Evento : actúa sobre
+
+' ─────────────────────────────────────────
+'  RELACIONES — FACTORY / BUILDER / FACADE
+' ─────────────────────────────────────────
+
+EventoFactory ..> Evento : crea
+CompraBuilder o-- Compra : construye
+CompraFacade o-- DataInitializer : usa
+CompraFacade o-- CompraService : usa
+CompraFacade ..> Compra : coordina
+
+' ─────────────────────────────────────────
+'  RELACIONES — ADAPTER
+' ─────────────────────────────────────────
+
+ReporteCSVAdapter ..|> ReporteExportador : implements
+ReportePDFAdapter ..|> ReporteExportador : implements
+
+@enduml
