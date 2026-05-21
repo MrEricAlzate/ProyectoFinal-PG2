@@ -1,0 +1,7 @@
+﻿target/
+*.class
+*.pdf
+*.csv
+.idea/
+*.iml
+.DS_Store
