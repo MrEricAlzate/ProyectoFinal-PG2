@@ -35,7 +35,7 @@
             <version>${javafx.version}</version>
         </dependency>
 
-        <!-- Apache POI para exportar Excel (RF-046) -->
+        <!-- Apache POI para exportar Excel -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
@@ -47,7 +47,7 @@
             <version>5.3.0</version>
         </dependency>
 
-        <!-- PDFBox para generar reportes PDF (RF-046) -->
+        <!-- PDFBox para generar reportes PDF -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
@@ -65,7 +65,7 @@
 
     <build>
         <plugins>
-            <!-- Plugin de JavaFX para correr la app -->
+            <!-- Plugin de JavaFX para correr la app con: mvn javafx:run -->
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
@@ -92,10 +92,21 @@
                                     <mainClass>com.Eric.ventaeventos.Main</mainClass>
                                 </transformer>
                             </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+
         </plugins>
     </build>
 
